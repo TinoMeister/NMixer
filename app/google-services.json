@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "442632908091",
+    "firebase_url": "https://nmixer-97a91.firebaseio.com",
+    "project_id": "nmixer-97a91",
+    "storage_bucket": "nmixer-97a91.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442632908091:android:416c9c34fc6bbc0f3b9b1e",
+        "android_client_info": {
+          "package_name": "com.example.nmixer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "442632908091-kv7vt3h75ioig0t39102anm61t87n1jb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nmixer",
+            "certificate_hash": "f9ad8ea7ce63364cfb52c76defe9e4fc6e0cfb5c"
+          }
+        },
+        {
+          "client_id": "442632908091-281bvjv4jm9ps5a1sdn33qdpv3lrtg44.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqkCKOcYRnqtsPINMJkB6dzQyP4BWZbu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442632908091-281bvjv4jm9ps5a1sdn33qdpv3lrtg44.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

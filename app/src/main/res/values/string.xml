@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">NMixer</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_recent">Recent</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_top">Top</string>
+    <string name="menu_liked_Songs">Liked</string>
+    <string name="menu_account_settings">Profile</string>
+
+    <string name="facebook_app_id">522848055229380</string>
+    <string name="fb_login_protocol_scheme">fb522848055229380</string>
+
+</resources>
