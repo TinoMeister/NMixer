@@ -31,8 +31,6 @@ class LikedFragment : Fragment()  {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_liked, container, false)
 
-        MainActivity.getSearch("Liked")
-
         return root
     }
 

@@ -32,7 +32,6 @@ class TopFragment : Fragment()  {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_top, container, false)
 
-        MainActivity.getSearch("Top")
 
         return root
     }

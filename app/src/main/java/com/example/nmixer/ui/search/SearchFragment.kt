@@ -8,6 +8,7 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -19,6 +20,7 @@ import com.example.nmixer.UserDetailActivity
 import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
 import kotlinx.android.synthetic.main.fragment_search.*
+import java.text.Normalizer
 
 class SearchFragment : Fragment()  {
 
@@ -34,9 +36,6 @@ class SearchFragment : Fragment()  {
         savedInstanceState: Bundle?
     ): View? {
         val root = inflater.inflate(R.layout.fragment_search, container, false)
-
-        MainActivity.getSearch("Search")
-
         return root
     }
 
@@ -66,6 +65,86 @@ class SearchFragment : Fragment()  {
                 textViewListNull.visibility = View.VISIBLE
             }*/
         })
+
+        setHasOptionsMenu(true)
+    }
+
+    fun removeAccents(text: String): String{
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+            .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater?.inflate(R.menu.menu_search, menu)
+
+        val searchItem = menu?.findItem(R.id.item_search)
+        val searchView = searchItem?.actionView as SearchView
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+                searchView.setQuery(query, false)
+                searchItem.collapseActionView()
+                return true
+            }
+
+            @SuppressLint("DefaultLocale")
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (!newText.isNullOrEmpty()){
+                    val m = musicsTotal.filter {
+                        removeAccents(it.title!!.toLowerCase()).contains(newText, true)
+                    }
+                    val u = musicsTotal.filter {
+                        removeAccents(it.user!!.name!!.toLowerCase()).contains(newText, true)
+                    }
+
+                    when {
+                        m.isNotEmpty() -> {
+                            musicsList = ArrayList(m)
+                            listView.adapter = musicAdapterResult
+                            musicAdapterResult.notifyDataSetChanged()
+                        }
+                        u.isNotEmpty() -> {
+                            userList.clear()
+                            var conf = false
+
+                            for (i in 0 until ArrayList(u).size){
+                                for (j in  (i + 1) until ArrayList(u).size){
+                                    if (ArrayList(u)[i].user!!.name == ArrayList(u)[j].user!!.name)
+                                        conf = true
+                                }
+
+                                if (!conf)
+                                    userList.add(ArrayList(u)[i])
+
+                                conf = false
+                            }
+
+                            listView.adapter = userAdapterResult
+                            userAdapterResult.notifyDataSetChanged()
+                        }
+                        else -> {
+                           musicsList = ArrayList(m)
+                           listView.adapter = SearchFragment.musicAdapterResult
+                           musicAdapterResult.notifyDataSetChanged()
+                        }
+                    }
+                }
+                else{
+                    musicsList = musicsTotal
+                    listView.adapter = musicAdapterResult
+                    musicAdapterResult.notifyDataSetChanged()
+                }
+                return false
+            }
+
+        })
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return super.onOptionsItemSelected(item)
+
     }
 
     private fun getMusics(){
@@ -81,7 +160,6 @@ class SearchFragment : Fragment()  {
                         }
                     }
                 }
-                MainActivity.musicsTotal = musicsTotal
                 musicsList = musicsTotal
                 musicAdapter.notifyDataSetChanged()
                 getUsers()

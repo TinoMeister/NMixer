@@ -57,7 +57,6 @@ class LoginActivity : AppCompatActivity() {
                 else{
                     resetPassword(editTextEmail.text.toString().trimEnd())
                 }
-
             }
         }
 

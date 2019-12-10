@@ -37,7 +37,6 @@ class ToolsFragment : Fragment()  {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_tools, container, false)
 
-        MainActivity.getSearch("Top")
 
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()

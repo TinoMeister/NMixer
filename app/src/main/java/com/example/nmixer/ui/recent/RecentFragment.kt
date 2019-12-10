@@ -34,8 +34,6 @@ class RecentFragment : Fragment()  {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_recent, container, false)
 
-        MainActivity.getSearch("Recent")
-
         return root
     }
 

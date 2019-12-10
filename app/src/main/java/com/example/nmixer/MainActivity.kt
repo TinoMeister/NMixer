@@ -51,12 +51,12 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
     }
-
+/*
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
 
         val inflater = menuInflater
-        inflater.inflate(R.menu.main, menu)
+        inflater.inflate(R.menu.menu_search, menu)
 
         val manager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
         val searchItem = menu.findItem(R.id.item_search)
@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         })
         return true
     }
-
+*/
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment)
 
@@ -150,6 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object{
+        /*
         var SearchItem : MenuItem? = null
         var musicsTotal : MutableList<Music> = ArrayList()
 
@@ -160,6 +161,6 @@ class MainActivity : AppCompatActivity() {
         fun removeAccents(text: String): String{
             return Normalizer.normalize(text, Normalizer.Form.NFD)
                 .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
-        }
+        }*/
     }
 }
