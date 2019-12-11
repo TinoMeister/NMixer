@@ -1,8 +1,8 @@
 package com.example.nmixer.ui.recent
 
 import android.annotation.SuppressLint
-import android.media.MediaPlayer
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,12 +11,21 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.example.nmixer.MainActivity
 import com.example.nmixer.R
+import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.fragment_recent.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 class RecentFragment : Fragment()  {
 
@@ -32,9 +41,7 @@ class RecentFragment : Fragment()  {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_recent, container, false)
-
-        return root
+        return inflater.inflate(R.layout.fragment_recent, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -105,6 +112,37 @@ class RecentFragment : Fragment()  {
         })
     }
 
+    fun getFavorites(idUser : String, musicId : String, callback: (Boolean) -> Unit ){
+        var conf = false
+
+        doAsync {
+            auth = FirebaseAuth.getInstance()
+            val database = FirebaseDatabase.getInstance()
+            val myRef = database.getReference("Favorites")
+
+            myRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(data: DataSnapshot) {
+                    if (data.exists()){
+                        for (d in data.children){
+                            if (d.child("idUser" ).value.toString() == idUser && d.child("idMusic" ).value.toString() == musicId){
+                                conf = true
+                                break
+                            }
+                        }
+                    }
+
+                    uiThread {
+                        callback(conf)
+                    }
+                }
+
+                override fun onCancelled(erro: DatabaseError) {
+                    Log.d("Error / Share", erro.message)
+                }
+            })
+        }
+    }
+
     inner class MusicsAdapter : BaseAdapter() {
         @SuppressLint("ViewHolder")
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
@@ -121,11 +159,31 @@ class RecentFragment : Fragment()  {
             textViewTime.text = music.time
 
             view .setOnClickListener {
-                com.example.nmixer.playSong("https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752")
+                //com.example.nmixer.playSong("https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752")
 
-                /*auth = FirebaseAuth.getInstance()
-                Favorite.insertFavorite(auth!!.uid.toString(), music.id)
-                val intent = Intent(requireActivity(), TrackActivity::class.java)
+                auth = FirebaseAuth.getInstance()
+                /* Code for likes */
+                getFavorites(auth!!.uid!!, music.id!!){
+                    if (!it){
+                        val sdf = SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS")
+                        val currentDate = sdf.format(Date())
+                        val idFavorite = UUID.randomUUID().toString()
+                        val database = FirebaseDatabase.getInstance()
+                        val myRef = database.getReference("Favorites")
+                            .child(idFavorite)
+
+                        val favorite = Favorite (
+                            idFavorite,
+                            currentDate,
+                            auth!!.uid,
+                            music.id
+                        )
+
+                        myRef.setValue(favorite)
+                    }
+                }
+
+                /*val intent = Intent(requireActivity(), TrackActivity::class.java)
                 //intent.putExtra(ArticleActivity.ARTICLE, article.toJson().toString())
                 requireActivity().startActivity(intent)*/
             }

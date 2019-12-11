@@ -84,7 +84,7 @@ class User {
 
         fun getUsers(callback: (MutableList<User>?) -> Unit ){
 
-            var usersList : MutableList<User> = ArrayList()
+            val usersList : MutableList<User> = ArrayList()
 
             doAsync {
                 auth = FirebaseAuth.getInstance()

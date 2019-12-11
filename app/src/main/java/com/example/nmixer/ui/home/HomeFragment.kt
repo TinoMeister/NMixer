@@ -1,7 +1,6 @@
 package com.example.nmixer.ui.home
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,20 +11,25 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.example.nmixer.MainActivity
 import com.example.nmixer.R
-import com.example.nmixer.TrackActivity
 import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.fragment_home.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.collections.ArrayList
 
 class HomeFragment : Fragment() {
 
     private lateinit var homeViewModel: HomeViewModel
     var auth : FirebaseAuth? = null
+    lateinit var database : FirebaseDatabase
+    private lateinit var myRef : DatabaseReference
     private var musicAdapter = MusicsAdapter()
     var musics : MutableList<Music> = ArrayList()
 
@@ -34,9 +38,9 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
-
-        return root
+        auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
+        return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -68,7 +72,49 @@ class HomeFragment : Fragment() {
         })
 
         fab.setOnClickListener {
-            Music.insertMusic("title", "2019/07/21", "2:30")
+            val idMusic = UUID.randomUUID().toString()
+            myRef = database.getReference("Musics")
+                .child(idMusic)
+
+            val music = Music (
+                idMusic,
+                "title" ,
+                "2019/07/21",
+                "2:30",
+                auth?.uid.toString()
+            )
+
+            myRef.setValue(music)
+        }
+    }
+
+    fun getShares(musicId : String, callback: (Boolean) -> Unit ){
+        var conf = false
+
+        doAsync {
+            val database = FirebaseDatabase.getInstance()
+            val myRef = database.getReference("Shares")
+
+            myRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(data: DataSnapshot) {
+                    if (data.exists()){
+                        for (d in data.children){
+                            if (d.child("idMusic" ).value.toString() == musicId){
+                                conf = true
+                                break
+                            }
+                        }
+                    }
+
+                    uiThread {
+                        callback(conf)
+                    }
+                }
+
+                override fun onCancelled(erro: DatabaseError) {
+                    Log.d("Error / Share", erro.message)
+                }
+            })
         }
     }
 
@@ -89,13 +135,26 @@ class HomeFragment : Fragment() {
 
             view .setOnClickListener {
 
-                Share.insertShare(music.id, "Public")
-
                 /* Code for Share*/
+                getShares(music.id!!){
+                    if (!it){
+                        val idShare = UUID.randomUUID().toString()
+                        val database = FirebaseDatabase.getInstance()
+                        val myRef = database.getReference("Shares")
+                            .child(idShare)
 
-                //Share.insertShareFirebase(music.id, "Private")
-                /* Code for likes */
-                //Favorite.insertFavoriteFirebase(auth!!.uid.toString(), music.id)
+                        val share = Share(
+                            idShare,
+                            music.id,
+                            "Public",
+                            ""
+                        )
+
+                        myRef.setValue(share)
+                    }
+                }
+
+
 
                 /*  Code for delete  */
                 //Music.deleteMusicFirebase(music)

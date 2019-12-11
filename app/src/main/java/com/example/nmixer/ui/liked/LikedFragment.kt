@@ -10,10 +10,10 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.example.nmixer.MainActivity
 import com.example.nmixer.R
 import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_liked.*
 
 class LikedFragment : Fragment()  {
@@ -23,15 +23,15 @@ class LikedFragment : Fragment()  {
     private var favorites : MutableList<Favorite> = ArrayList()
     private var musics : MutableList<Music> = ArrayList()
     private var conf = false
+    var auth : FirebaseAuth? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_liked, container, false)
-
-        return root
+        auth = FirebaseAuth.getInstance()
+        return inflater.inflate(R.layout.fragment_liked, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -69,7 +69,7 @@ class LikedFragment : Fragment()  {
             it?.let {
                 for (favorite in favorites){
                     for (music in it){
-                        if (music.id.toString() == favorite.idMusic.toString()){
+                        if (music.id.toString() == favorite.idMusic.toString() && favorite.idUser.toString() == auth!!.uid){
                             musics.add(music)
                             musicAdapter.notifyDataSetChanged()
                         }

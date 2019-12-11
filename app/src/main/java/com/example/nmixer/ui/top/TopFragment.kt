@@ -2,7 +2,6 @@ package com.example.nmixer.ui.top
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import com.example.nmixer.MainActivity
 import com.example.nmixer.R
 import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
@@ -30,10 +28,7 @@ class TopFragment : Fragment()  {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_top, container, false)
-
-
-        return root
+        return inflater.inflate(R.layout.fragment_top, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -46,6 +41,8 @@ class TopFragment : Fragment()  {
 
         topViewModel.favorites?.observe(this, Observer {
             favorites.clear()
+            musics.clear()
+            musicAdapter.notifyDataSetChanged()
             it?.let {
                 for (favorite in it){
                     favorites.add(favorite)
