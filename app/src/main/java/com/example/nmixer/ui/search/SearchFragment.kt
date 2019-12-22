@@ -1,6 +1,7 @@
 package com.example.nmixer.ui.search
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import android.widget.BaseAdapter
@@ -9,6 +10,7 @@ import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.example.nmixer.PlayerActivity
 import com.example.nmixer.R
 import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
@@ -126,12 +128,15 @@ class SearchFragment : Fragment()  {
                         removeAccents(it.user!!.name!!.toLowerCase()).contains(newText, true)
                     }
 
-                    when {
+                    musicsList = when {
                         m.isNotEmpty() -> {
-                            musicsList = ArrayList(m)
+                            ArrayList(m)
                         }
                         u.isNotEmpty() -> {
-                            musicsList = ArrayList(u)
+                            ArrayList(u)
+                        }
+                        else ->{
+                            ArrayList()
                         }
                     }
                 }
@@ -156,16 +161,26 @@ class SearchFragment : Fragment()  {
             val textViewName = view.findViewById<TextView>(R.id.textViewName)
             val textViewAuthor = view.findViewById<TextView>(R.id.textViewAuthor)
             val music = musicsList[position]
+            val listShares : MutableList<Share> = ArrayList()
 
             textViewName.text = music.title
             textViewAuthor.text =  if (music.user?.name != null) music.user?.name else music.idUser
 
 
             view.setOnClickListener {
-                com.example.nmixer.playSong("https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752")
-                /*val intent = Intent(requireActivity(), UserDetailActivity::class.java)
-                intent.putExtra(UserDetailActivity.USER, music.user!!.toJson().toString())
-                requireActivity().startActivity(intent)*/
+                for (share in shares){
+                    for (musicList in musicsList){
+                        if (musicList.id == share.idMusic){
+                            share.music = musicList
+                            share.music?.user = musicList.user
+                            listShares.add(share)
+                        }
+                    }
+                }
+
+                val intent = Intent(requireActivity(), PlayerActivity::class.java)
+                intent.putExtra(PlayerActivity.MUSIC, listShares[position].toJson().toString())
+                requireActivity().startActivity(intent)
             }
 
             return view

@@ -82,41 +82,6 @@ class User {
         }
 
 
-        fun getUsers(callback: (MutableList<User>?) -> Unit ){
-
-            val usersList : MutableList<User> = ArrayList()
-
-            doAsync {
-                auth = FirebaseAuth.getInstance()
-                val database = FirebaseDatabase.getInstance()
-                val myRef = database.getReference("Users")
-
-                myRef.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(data: DataSnapshot) {
-                        usersList.clear()
-                        if (data.exists()){
-                            for (d in data.children){
-                                val user = User(d)
-                                usersList.add(user)
-                            }
-                        }
-
-                        if (usersList.size > 0)
-                            uiThread {
-                                callback(usersList)
-                            }
-                        else
-                            uiThread {
-                                callback(null)
-                            }
-                    }
-
-                    override fun onCancelled(erro: DatabaseError) {
-                    }
-                })
-            }
-        }
-
         fun insertUser(name : String?, email : String?) {
             auth = FirebaseAuth.getInstance()
             val database = FirebaseDatabase.getInstance()

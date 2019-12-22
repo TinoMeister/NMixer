@@ -1,17 +1,20 @@
 package com.example.nmixer
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.StrictMode
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.example.nmixer.models.TelnetConnection
 import com.example.nmixer.models.User
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -21,15 +24,20 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.android.synthetic.main.activity_login.*
+import java.io.IOException
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 
 class LoginActivity : AppCompatActivity() {
 
     var auth : FirebaseAuth? = null
-    var googleSignInClient : GoogleSignInClient? = null
-    var isSignIn = true
-    var passwordForgot = false
-    var count = 0
-    var isConnected = false
+    private var googleSignInClient : GoogleSignInClient? = null
+    private var isSignIn = true
+    private var passwordForgot = false
+    private var count = 0
+    private var isConnected = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +68,20 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
+        buttonSound.setOnClickListener {
+            val socket = TelnetConnection()
+
+            socket.connectUdp()
+
+            if (socket.result == "ack"){
+                val intent = Intent(this@LoginActivity, EspActivity::class.java)
+                startActivity(intent)
+            }
+            else
+                Toast.makeText(baseContext, "Esp is not connect.",
+                    Toast.LENGTH_SHORT).show()
+        }
+
         textViewFPassword.setOnClickListener {
             passwordForgot = true
             updateView()
@@ -85,7 +107,7 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
     }
 
-    fun signIn(email : String, password : String){
+    private fun signIn(email : String, password : String){
         auth!!.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -102,7 +124,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    fun signUp(name : String, email : String, password : String){
+    private fun signUp(name : String, email : String, password : String){
         auth!!.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -123,7 +145,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    fun resetPassword(email : String){
+    private fun resetPassword(email : String){
         auth!!.sendPasswordResetEmail(email)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -138,8 +160,8 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    fun googleLogin() {
-        var signInIntent = googleSignInClient?.signInIntent
+    private fun googleLogin() {
+        val signInIntent = googleSignInClient?.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
@@ -147,17 +169,17 @@ class LoginActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RC_SIGN_IN) {
-            var result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
+            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             if (result.isSuccess) {
-                var account = result.signInAccount
+                val account = result.signInAccount
                 firebaseAuthWithGoogle(account)
             }
         }
     }
 
-    fun firebaseAuthWithGoogle(account : GoogleSignInAccount?) {
-        var credential = GoogleAuthProvider.getCredential(account?.idToken, null)
+    private fun firebaseAuthWithGoogle(account : GoogleSignInAccount?) {
+        val credential = GoogleAuthProvider.getCredential(account?.idToken, null)
         auth?.signInWithCredential(credential)
             ?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -177,7 +199,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
 
-    fun updateView() {
+    @SuppressLint("SetTextI18n")
+    private fun updateView() {
 
         if (passwordForgot){
             editTextName.visibility = View.GONE
@@ -196,7 +219,7 @@ class LoginActivity : AppCompatActivity() {
             viewRight.visibility = View.INVISIBLE
 
             buttonConnectGoogle.visibility = View.INVISIBLE
-            buttonConnectFacebook.visibility = View.INVISIBLE
+            buttonSound.visibility = View.INVISIBLE
 
         }
         else{
@@ -215,7 +238,7 @@ class LoginActivity : AppCompatActivity() {
             viewRight.visibility = View.VISIBLE
 
             buttonConnectGoogle.visibility = View.VISIBLE
-            buttonConnectFacebook.visibility = View.VISIBLE
+            buttonSound.visibility = View.VISIBLE
         }
 
         if (isSignIn && !passwordForgot){
@@ -230,7 +253,7 @@ class LoginActivity : AppCompatActivity() {
             viewRight.visibility = View.GONE
 
             buttonConnectGoogle.visibility = View.GONE
-            buttonConnectFacebook.visibility = View.GONE
+            buttonSound.visibility = View.GONE
 
             buttonEnter.text = "Sing Up"
         }
@@ -240,13 +263,12 @@ class LoginActivity : AppCompatActivity() {
     }
 
 
-    fun allUnSee(value : Boolean) {
-        var type : Int
+    private fun allUnSee(value : Boolean) {
 
-        if (value)
-            type = View.VISIBLE
+        val type : Int = if (value)
+            View.VISIBLE
         else
-            type = View.GONE
+            View.GONE
 
         logo.visibility = type
         textViewSignIn.visibility = type
@@ -259,19 +281,18 @@ class LoginActivity : AppCompatActivity() {
         textViewOr.visibility = type
         viewRight.visibility = type
         buttonConnectGoogle.visibility = type
-        buttonConnectFacebook.visibility = type
+        buttonSound.visibility = type
     }
 
     override fun onStart() {
         super.onStart()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
                     Manifest.permission.READ_EXTERNAL_STORAGE
-                )) {
-
-            } else {
+                )
+            ) {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
@@ -296,59 +317,45 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        if (isConnected) {
-            val currentUser = auth?.currentUser
+        when {
+            isConnected -> {
+                val currentUser = auth?.currentUser
 
-            if (currentUser != null) {
+                if (currentUser != null) {
 
-               User.getUser{
-                   it?.let {
-                       if (it.imageUrl != "") {
-                           Glide.with(this@LoginActivity)
-                               .load(it.imageUrl)
-                               .diskCacheStrategy(DiskCacheStrategy.ALL)
-                       }
-                   }
+                    User.getUser{
+                        it?.let {
+                            if (it.imageUrl != "") {
+                                Glide.with(this@LoginActivity)
+                                    .load(it.imageUrl)
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                    .submit()
+                            }
+                        }
+                    }
+
+                    intent = Intent(this@LoginActivity, MainActivity::class.java)
+                    startActivity(intent)
                 }
+                else
+                    allUnSee(true)
 
-                intent = Intent(this@LoginActivity, MainActivity::class.java)
-                startActivity(intent)
+                llProgressBarLogin.visibility = View.GONE
             }
-            else
+            count >= 12 -> {
+                Toast.makeText(baseContext,
+                    "No Internet Connection",
+                    Toast.LENGTH_SHORT)
+                    .show()
+                llProgressBarLogin.visibility = View.GONE
                 allUnSee(true)
-
-            llProgressBarLogin.visibility = View.GONE
-        }
-        else if (count >= 12){
-            Toast.makeText(baseContext,
-                "No Internet Connection",
-                Toast.LENGTH_SHORT)
-                .show()
-            llProgressBarLogin.visibility = View.GONE
-            allUnSee(true)
-        }
-        else
-            mDelayHandler.postDelayed(mRunnable, 500)
-    }
-
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            4 -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-                }
-                return
             }
+            else -> mDelayHandler.postDelayed(mRunnable, 500)
         }
     }
+
 
     companion object {
-        private const val TAG = "LoginActivity"
         private const val RC_SIGN_IN = 9001
     }
 }

@@ -1,6 +1,7 @@
 package com.example.nmixer.ui.top
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,9 +11,10 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.example.nmixer.PlayerActivity
 import com.example.nmixer.R
 import com.example.nmixer.models.Favorite
-import com.example.nmixer.models.Music
+import com.example.nmixer.models.Share
 import kotlinx.android.synthetic.main.fragment_top.*
 
 class TopFragment : Fragment()  {
@@ -20,7 +22,7 @@ class TopFragment : Fragment()  {
     private lateinit var topViewModel: TopViewModel
     private var musicAdapter = MusicsAdapter()
     private var favorites : MutableList<Favorite> = ArrayList()
-    private var musics : MutableList<Music> = ArrayList()
+    private var shares : MutableList<Share> = ArrayList()
     private var conf = false
 
     override fun onCreateView(
@@ -41,7 +43,7 @@ class TopFragment : Fragment()  {
 
         topViewModel.favorites?.observe(this, Observer {
             favorites.clear()
-            musics.clear()
+            shares.clear()
             musicAdapter.notifyDataSetChanged()
             it?.let {
                 for (favorite in it){
@@ -58,16 +60,32 @@ class TopFragment : Fragment()  {
         })
     }
 
-    private fun getMusics(){
-        topViewModel.musics?.observe(this, Observer {
-            musics.clear()
+    private fun getShares(){
+        topViewModel.shares?.observe(this, Observer {
+            shares.clear()
             musicAdapter.notifyDataSetChanged()
 
             it?.let {
                 for (favorite in favorites){
+                    for (share in it){
+                        if (share.idMusic == favorite.idMusic){
+                            shares.add(share)
+                            musicAdapter.notifyDataSetChanged()
+                        }
+                    }
+                }
+                getMusics()
+            }
+        })
+    }
+
+    private fun getMusics(){
+        topViewModel.musics?.observe(this, Observer {
+            it?.let {
+                for (share in shares){
                     for (music in it){
-                        if (music.id.toString() == favorite.idMusic.toString()){
-                            musics.add(music)
+                        if (music.id == share.idMusic){
+                            share.music = music
                             musicAdapter.notifyDataSetChanged()
                         }
                     }
@@ -81,10 +99,10 @@ class TopFragment : Fragment()  {
         topViewModel.users?.observe(this, Observer {
             it?.let {
                 for (user in it) {
-                    for (music in musics)
+                    for (share in shares)
                     {
-                        if (user.id == music.idUser){
-                            music.user = user
+                        if (user.id == share.music?.idUser){
+                            share.music?.user = user
                             musicAdapter.notifyDataSetChanged()
                         }
                     }
@@ -136,7 +154,7 @@ class TopFragment : Fragment()  {
         }
 
         this.favorites = favorites
-        getMusics()
+        getShares()
     }
 
     inner class MusicsAdapter : BaseAdapter() {
@@ -147,24 +165,23 @@ class TopFragment : Fragment()  {
             val textViewTitleMusic = view.findViewById<TextView>(R.id.textViewTitleMusic)
             val textViewAuthor = view.findViewById<TextView>(R.id.textViewAuthor)
             val textViewTime = view.findViewById<TextView>(R.id.textViewTime)
-            val music = musics[position]
+            val share = shares[position]
 
-            textViewTitleMusic.text = music.title
-            textViewAuthor.text =  if (music.user?.name != null) music.user?.name else music.idUser
-            textViewTime.text = music.time
+            textViewTitleMusic.text = share.music?.title
+            textViewAuthor.text =  if (share.music?.user?.name != null) share.music?.user?.name else share.music?.idUser
+            textViewTime.text = share.music?.time
 
             view .setOnClickListener {
-                com.example.nmixer.playSong("https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752")
-                /*val intent = Intent(requireActivity(), TrackActivity::class.java)
-                //intent.putExtra(ArticleActivity.ARTICLE, article.toJson().toString())
-                requireActivity().startActivity(intent)*/
+                val intent = Intent(requireActivity(), PlayerActivity::class.java)
+                intent.putExtra(PlayerActivity.MUSIC, shares[position].toJson().toString())
+                requireActivity().startActivity(intent)
             }
 
             return view
         }
 
         override fun getItem(position: Int): Any {
-            return musics[position]
+            return shares[position]
         }
 
         override fun getItemId(position: Int): Long {
@@ -172,7 +189,7 @@ class TopFragment : Fragment()  {
         }
 
         override fun getCount(): Int {
-            return musics.size
+            return shares.size
         }
     }
 }

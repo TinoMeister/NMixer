@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
+import com.example.nmixer.models.Share
 import com.example.nmixer.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -18,6 +19,41 @@ import java.util.ArrayList
 
 class LikedViewModel : ViewModel() {
     var auth: FirebaseAuth? = null
+
+    private val _shares = MutableLiveData<MutableList<Share>>().apply {
+        val sharesList = ArrayList<Share>()
+
+        doAsync {
+            auth = FirebaseAuth.getInstance()
+            val database = FirebaseDatabase.getInstance()
+            val myRef = database.getReference("Shares")
+
+            myRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(data: DataSnapshot) {
+                    sharesList.clear()
+                    if (data.exists()){
+                        for (d in data.children){
+                            val share = Share(d)
+                            sharesList.add(share)
+                        }
+                    }
+
+                    uiThread {
+                        value = if (sharesList.size > 0)
+                            sharesList
+                        else
+                            null
+                    }
+                }
+
+                override fun onCancelled(erro: DatabaseError) {
+                    Log.d("Error / Share", erro.message)
+                }
+            })
+        }
+    }
+
+    val shares : LiveData<MutableList<Share>>? = _shares
 
     private val _favorites = MutableLiveData<MutableList<Favorite>>().apply {
 

@@ -12,8 +12,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".PlayerActivity"></activity>
-        <activity android:name=".UserDetailActivity" />
+        <activity android:name=".EspActivity"></activity>
+        <activity
+            android:name=".PlayerActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".TrackActivity"
             android:screenOrientation="sensorLandscape" />

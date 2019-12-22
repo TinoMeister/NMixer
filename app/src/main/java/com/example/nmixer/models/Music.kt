@@ -42,7 +42,13 @@ class Music {
         title       = jsonObject.getString("title"     )
         date        = jsonObject.getString("date"      )
         time        = jsonObject.getString("time"      )
-        idUser      = jsonObject.getString("idUser"    )
+
+        val sourceObj = jsonObject.get("user")
+
+        if (sourceObj is JSONObject)
+            user  = User(sourceObj.toString())
+        else if (sourceObj is String)
+            user  = User(sourceObj)
     }
 
     constructor(data : DataSnapshot){
@@ -56,11 +62,11 @@ class Music {
     fun toJson () : JSONObject{
         val jsonObject = JSONObject()
 
-        jsonObject.put("id"        , id        )
-        jsonObject.put("title"     , title     )
-        jsonObject.put("date"      , date      )
-        jsonObject.put("type"      , time      )
-        jsonObject.put("idUser"    , idUser    )
+        jsonObject.put("id"     , id        )
+        jsonObject.put("title"  , title     )
+        jsonObject.put("date"   , date      )
+        jsonObject.put("time"   , time      )
+        jsonObject.put("user"   , user?.toJson().toString()      )
 
         return jsonObject
     }

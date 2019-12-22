@@ -1,6 +1,7 @@
 package com.example.nmixer.ui.recent
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,9 +12,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.example.nmixer.PlayerActivity
 import com.example.nmixer.R
 import com.example.nmixer.models.Favorite
-import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -31,7 +32,6 @@ class RecentFragment : Fragment()  {
 
     private lateinit var recentViewModel: RecentViewModel
     private var musicAdapter = MusicsAdapter()
-    var musics : MutableList<Music> = ArrayList()
     private var shares : MutableList<Share> = ArrayList()
     private var conf = false
     var auth : FirebaseAuth? = null
@@ -54,7 +54,6 @@ class RecentFragment : Fragment()  {
 
         recentViewModel.shares?.observe(this, Observer {
             shares.clear()
-            musics.clear()
             musicAdapter.notifyDataSetChanged()
 
             it?.let {
@@ -74,14 +73,11 @@ class RecentFragment : Fragment()  {
 
     private fun getMusics(){
         recentViewModel.musics?.observe(this, Observer {
-            musics.clear()
-            musicAdapter.notifyDataSetChanged()
-
             it?.let {
                 for (share in shares){
                     for (music in it) {
                         if (share.idMusic == music.id){
-                            musics.add(music)
+                            share.music = music
                             musicAdapter.notifyDataSetChanged()
                         }
                     }
@@ -95,10 +91,10 @@ class RecentFragment : Fragment()  {
         recentViewModel.users?.observe(this, Observer {
             it?.let {
                 for (user in it) {
-                    for (music in musics)
+                    for (share in shares)
                     {
-                        if (user.id == music.idUser){
-                            music.user = user
+                        if (user.id == share.music!!.idUser){
+                            share.music!!.user = user
                             musicAdapter.notifyDataSetChanged()
                         }
                     }
@@ -151,19 +147,19 @@ class RecentFragment : Fragment()  {
             val textViewTitleMusic = view.findViewById<TextView>(R.id.textViewTitleMusic)
             val textViewAuthor = view.findViewById<TextView>(R.id.textViewAuthor)
             val textViewTime = view.findViewById<TextView>(R.id.textViewTime)
-            val music = musics[position]
+            val music = shares[position].music
 
 
-            textViewTitleMusic.text = music.title
-            textViewAuthor.text =  if (music.user?.name != null) music.user?.name else music.idUser
-            textViewTime.text = music.time
+            textViewTitleMusic.text = music?.title
+            textViewAuthor.text =  if (music?.user?.name != null) music.user?.name else music?.idUser
+            textViewTime.text = music?.time
 
             view .setOnClickListener {
                 //com.example.nmixer.playSong("https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752")
 
                 auth = FirebaseAuth.getInstance()
                 /* Code for likes */
-                getFavorites(auth!!.uid!!, music.id!!){
+                getFavorites(auth!!.uid!!, music?.id!!){
                     if (!it){
                         val sdf = SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS")
                         val currentDate = sdf.format(Date())
@@ -176,15 +172,15 @@ class RecentFragment : Fragment()  {
                             idFavorite,
                             currentDate,
                             auth!!.uid,
-                            music.id
+                            music?.id
                         )
 
                         myRef.setValue(favorite)
                     }
                 }
 
-                /*val intent = Intent(requireActivity(), TrackActivity::class.java)
-                //intent.putExtra(ArticleActivity.ARTICLE, article.toJson().toString())
+                /*val intent = Intent(requireActivity(), PlayerActivity::class.java)
+                intent.putExtra(PlayerActivity.MUSIC, shares[position].toJson().toString())
                 requireActivity().startActivity(intent)*/
             }
 
@@ -192,7 +188,7 @@ class RecentFragment : Fragment()  {
         }
 
         override fun getItem(position: Int): Any {
-            return musics[position]
+            return shares[position].music!!
         }
 
         override fun getItemId(position: Int): Long {
@@ -200,7 +196,7 @@ class RecentFragment : Fragment()  {
         }
 
         override fun getCount(): Int {
-            return musics.size
+            return shares.size
         }
     }
 }

@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.example.nmixer.R
-import com.example.nmixer.models.Favorite
 import com.example.nmixer.models.Music
 import com.example.nmixer.models.Share
 import com.google.firebase.auth.FirebaseAuth
@@ -20,7 +19,6 @@ import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.fragment_home.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -147,7 +145,7 @@ class HomeFragment : Fragment() {
                             idShare,
                             music.id,
                             "Public",
-                            ""
+                            "https://firebasestorage.googleapis.com/v0/b/nmixer-97a91.appspot.com/o/musics%2FDark%20World.mp3?alt=media&token=f8564ca6-cf59-468d-bd98-13ff646a1752"
                         )
 
                         myRef.setValue(share)
